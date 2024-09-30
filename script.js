@@ -145,7 +145,7 @@ let earth = createPlanet({
       opacity: 0.8
     },
     textures: {
-      map: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/earthcloudmap.jpg',
+      map: 'https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg',
       alphaMap: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/earthcloudmaptrans.jpg'
     },
     glow: {
@@ -228,54 +228,61 @@ function placeNEOMarkers() {
 
 // Function to create NEO marker with given properties
 function createNEOMarker(neo) {
-    const theta = neo.theta; // Use the current theta for position calculation
-    const { x, y, z } = orbitalToCartesian(neo.a, neo.e, neo.i, theta);
+  const theta = neo.theta; // Use the current theta for position calculation
+  const { x, y, z } = orbitalToCartesian(neo.a, neo.e, neo.i, theta);
 
-    // Convert Cartesian coordinates to latitude and longitude
-    const latitude = (Math.asin(z / Math.sqrt(x * x + y * y + z * z)) * 180 / Math.PI);
-    const longitude = (Math.atan2(y, x) * 180 / Math.PI);
+  // Convert Cartesian coordinates to latitude and longitude
+  const latitude = (Math.asin(z / Math.sqrt(x * x + y * y + z * z)) * 180 / Math.PI);
+  const longitude = (Math.atan2(y, x) * 180 / Math.PI);
 
-    // Use individual height and size from neoData
-    const markerPosition = markerProto.latLongToVector3(latitude, longitude, 0.4, neo.height);
-    const markerMesh = markerProto.marker(neo.size, "#FF0000", markerPosition);
+  // Use individual height and size from neoData
+  const markerPosition = markerProto.latLongToVector3(latitude, longitude, 0.4, neo.height);
 
-        markerMesh.userData.name = neo.full_name; 
-        markerMesh.callback = () => {
-            document.querySelectorAll('.infoBox').forEach(box => {
-                box.style.display = 'none';
-            });
-            document.getElementById(`marker${index + 1}`).style.display = 'block';
-        };
-    
-        return markerMesh;
-    }
- 
+  // Create the marker with a moon texture
+  const markerMesh = markerProto.marker(neo.size, 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg', markerPosition);
 
-// Marker Proto
+  markerMesh.userData.name = neo.full_name; 
+  markerMesh.callback = () => {
+      document.querySelectorAll('.infoBox').forEach(box => {
+          box.style.display = 'none';
+      });
+      document.getElementById(`marker${index + 1}`).style.display = 'block';
+  };
+  
+  return markerMesh;
+}
+
+// Marker Proto (updated to use texture)
 let markerProto = {
-    latLongToVector3: function latLongToVector3(latitude, longitude, radius, height) {
-        var phi = latitude * Math.PI / 180;
-        var theta = (longitude - 180) * Math.PI / 180;
+  latLongToVector3: function latLongToVector3(latitude, longitude, radius, height) {
+      var phi = latitude * Math.PI / 180;
+      var theta = (longitude - 180) * Math.PI / 180;
 
-        var x = -(radius + height) * Math.cos(phi) * Math.cos(theta);
-        var y = (radius + height) * Math.sin(phi);
-        var z = (radius + height) * Math.cos(phi) * Math.sin(theta);
+      var x = -(radius + height) * Math.cos(phi) * Math.cos(theta);
+      var y = (radius + height) * Math.sin(phi);
+      var z = (radius + height) * Math.cos(phi) * Math.sin(theta);
 
-        return new THREE.Vector3(x, y, z);
-    },
-    marker: function marker(size, color, vector3Position) {
-        let markerGeometry = new THREE.SphereGeometry(size);
-        let markerMaterial = new THREE.MeshLambertMaterial({
-            color: color
-        });
+      return new THREE.Vector3(x, y, z);
+  },
+  
+  // Use texture instead of color
+  marker: function marker(size, textureUrl, vector3Position) {
+      let markerGeometry = new THREE.SphereGeometry(size);
+      
+      // Load the texture using TextureLoader
+      let textureLoader = new THREE.TextureLoader();
+      let markerMaterial = new THREE.MeshLambertMaterial();
 
-        let markerMesh = new THREE.Mesh(markerGeometry, markerMaterial);
-        markerMesh.position.copy(vector3Position);
+      textureLoader.load(textureUrl, function (texture) {
+          markerMaterial.map = texture; // Apply the loaded texture to the material
+      });
 
-        return markerMesh;
-    }
+      let markerMesh = new THREE.Mesh(markerGeometry, markerMaterial);
+      markerMesh.position.copy(vector3Position);
+
+      return markerMesh;
+  }
 };
-
 
 
 
@@ -304,6 +311,7 @@ let placeMarkerAtAddress = function (address, color) {
     }
   };
 };
+
 
 // Galaxy
 let galaxyGeometry = new THREE.SphereGeometry(100, 32, 32);
