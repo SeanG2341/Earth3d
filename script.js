@@ -8,6 +8,7 @@ let cameraRotationSpeed = 0.001;
 let cameraAutoRotation = true;
 let orbitControls = new THREE.OrbitControls(camera);
 
+
 let spotLight = new THREE.SpotLight(0xffffff, 1, 0, 10, 2);
 
 // Texture Loader
@@ -158,27 +159,30 @@ let earth = createPlanet({
 
 // Updated NEO Data with velocity property
 const neoData = [
-  { full_name: "7092 Cadmus (1992 LC)", a: 21, e: 1.2, i: 94.9, height: 0.45, size: 0.03, velocity: 1 },
-  { full_name: "53319 (1999 JM8)", a: 1234, e: 1.2, i: 6.0, height: 0.6, size: 0.04, velocity: -0.54 },
-  { full_name: "66146 (1998 TU3)", a: 0.8, e: 0.03, i: 0.0, height: 0.4, size: 0.02, velocity: 0.02 },
-  { full_name: "moon (1994 LY)", a: 2.032, e: 0.42, i: 36.0, height: 0.9, size: 0.15, velocity: 0.3 },
+  { full_name: "Cadmus", a: 2, e: 0.6, i: -65.1, height: 0.6, size: 0.03, velocity: 1 },
+  { full_name: "Sisyphus", a: 0.32, e: 0.9, i: 1.1, height: 0.4, size: 0.04, velocity: -1.4 },
+  { full_name: "Amor", a: 21, e: 0.2, i: 32.0, height: 0.4, size: 0.02, velocity: 0.6 },
+  { full_name: "Moon", a: 4, e: 0.1, i: 5.1, height: 0.9, size: 0.15, velocity: 0.3 },
 ];
 
-// Conversion function from orbital elements to Cartesian coordinates
 function orbitalToCartesian(a, e, i, theta) {
-    const radian = Math.PI / 180;
-    i *= radian; 
-    theta *= radian;
+  const radian = Math.PI / 180;
+  i *= radian;  // Convert inclination to radians
+  theta *= radian;  // Convert true anomaly to radians
 
-    const p = a * (1 - e * e); 
-    const r = p / (1 + e * Math.cos(theta)); 
+  const p = a * (1 - e * e);  // Semi-latus rectum (p)
+  const r = p / (1 + e * Math.cos(theta));  // Radius (r) at angle theta
 
-    // Calculate Cartesian coordinates (assuming i is inclination, simplified)
-    const x = r * Math.cos(theta) * Math.cos(i);
-    const y = r * Math.sin(theta) * Math.cos(i);
-    const z = r * Math.sin(i);
+  // Calculate position in the orbital plane (before applying inclination)
+  const x_orbital = r * Math.cos(theta);
+  const y_orbital = r * Math.sin(theta);
 
-    return { x, y, z };
+  // Apply inclination (rotation around x-axis)
+  const x = x_orbital;
+  const y = y_orbital * Math.cos(i);
+  const z = y_orbital * Math.sin(i);
+
+  return { x, y, z };
 }
 
 // Function to place NEO markers with individual height, size, and velocity
@@ -190,6 +194,7 @@ function placeNEOMarkers() {
         earth.getObjectByName('surface').add(markerMesh); // Add marker to the earth surface
         neo.mesh = markerMesh; // Save the mesh for updating later
     });
+    
 
     // Function to update positions of NEO markers over time
     function updateMarkers() {
@@ -220,6 +225,7 @@ function placeNEOMarkers() {
     updateMarkers();
 }
 
+
 // Function to create NEO marker with given properties
 function createNEOMarker(neo) {
     const theta = neo.theta; // Use the current theta for position calculation
@@ -233,10 +239,19 @@ function createNEOMarker(neo) {
     const markerPosition = markerProto.latLongToVector3(latitude, longitude, 0.4, neo.height);
     const markerMesh = markerProto.marker(neo.size, "#FF0000", markerPosition);
 
-    return markerMesh;
-}
+        markerMesh.userData.name = neo.full_name; 
+        markerMesh.callback = () => {
+            document.querySelectorAll('.infoBox').forEach(box => {
+                box.style.display = 'none';
+            });
+            document.getElementById(`marker${index + 1}`).style.display = 'block';
+        };
+    
+        return markerMesh;
+    }
+ 
 
-// Marker Proto (unchanged)
+// Marker Proto
 let markerProto = {
     latLongToVector3: function latLongToVector3(latitude, longitude, radius, height) {
         var phi = latitude * Math.PI / 180;
@@ -429,5 +444,3 @@ guiAtmosphericGlow.addColor(atmosphericGlowControls, 'color').onChange(function 
 });
 init();
 animate();
-
-
