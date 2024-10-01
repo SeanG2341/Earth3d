@@ -159,7 +159,7 @@ let earth = createPlanet({
 
 // Updated NEO Data with velocity property
 const neoData = [
-  { full_name: "Cadmus", a: 2, e: 0.6, i: -65.1, height: 0.6, size: 0.03, velocity: 1 },
+  { full_name: "Cadmus", a: 2, e: 0.6, i: -65.1, height: 1.4, size: 0.03, velocity: 1 },
   { full_name: "Sisyphus", a: 0.32, e: 0.9, i: 1.1, height: 0.4, size: 0.04, velocity: -1.4 },
   { full_name: "Amor", a: 21, e: 0.2, i: 32.0, height: 0.4, size: 0.02, velocity: 0.6 },
   { full_name: "Moon", a: 4, e: 0.1, i: 5.1, height: 0.9, size: 0.15, velocity: 0.3 },
@@ -167,17 +167,16 @@ const neoData = [
 
 function orbitalToCartesian(a, e, i, theta) {
   const radian = Math.PI / 180;
-  i *= radian;  // Convert inclination to radians
-  theta *= radian;  // Convert true anomaly to radians
+  i *= radian;  
+  theta *= radian;  
 
-  const p = a * (1 - e * e);  // Semi-latus rectum (p)
-  const r = p / (1 + e * Math.cos(theta));  // Radius (r) at angle theta
+  const p = a * (1 - e * e);  
+  const r = p / (1 + e * Math.cos(theta));  
 
   // Calculate position in the orbital plane (before applying inclination)
   const x_orbital = r * Math.cos(theta);
   const y_orbital = r * Math.sin(theta);
 
-  // Apply inclination (rotation around x-axis)
   const x = x_orbital;
   const y = y_orbital * Math.cos(i);
   const z = y_orbital * Math.sin(i);
@@ -199,36 +198,29 @@ function placeNEOMarkers() {
     // Function to update positions of NEO markers over time
     function updateMarkers() {
         neoData.forEach(neo => {
-            // Increment theta based on the NEO's velocity
             neo.theta += neo.velocity; 
 
-            // Reset theta if it exceeds 360 degrees (one full orbit)
             neo.theta = (neo.theta + 360) % 360;
 
-            // Calculate new Cartesian coordinates
             const { x, y, z } = orbitalToCartesian(neo.a, neo.e, neo.i, neo.theta);
 
-            // Convert Cartesian to latitude/longitude
             const latitude = (Math.asin(z / Math.sqrt(x * x + y * y + z * z)) * 180 / Math.PI);
             const longitude = (Math.atan2(y, x) * 180 / Math.PI);
 
-            // Update the marker's position
             const newPosition = markerProto.latLongToVector3(latitude, longitude, 0.4, neo.height);
-            neo.mesh.position.copy(newPosition); // Update marker's 3D position
+            neo.mesh.position.copy(newPosition);
         });
 
-        // Schedule the next update
         requestAnimationFrame(updateMarkers);
     }
 
-    // Start the animation loop
     updateMarkers();
 }
 
 
 // Function to create NEO marker with given properties
 function createNEOMarker(neo) {
-  const theta = neo.theta; // Use the current theta for position calculation
+  const theta = neo.theta; 
   const { x, y, z } = orbitalToCartesian(neo.a, neo.e, neo.i, theta);
 
   // Convert Cartesian coordinates to latitude and longitude
