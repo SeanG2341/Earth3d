@@ -158,11 +158,11 @@ let earth = createPlanet({
 });
 
 // Updated NEO Data with velocity property
-const neoData = [
+let neoData = [
   { full_name: "Cadmus", a: 2, e: 0.6, i: -65.1, height: 1.4, size: 0.03, velocity: 1 },
   { full_name: "Sisyphus", a: 0.32, e: 0.9, i: 1.1, height: 0.4, size: 0.04, velocity: -1.4 },
   { full_name: "Amor", a: 21, e: 0.2, i: 32.0, height: 0.4, size: 0.02, velocity: 0.6 },
-  { full_name: "Moon", a: 4, e: 0.1, i: 5.1, height: 0.9, size: 0.15, velocity: 0.3 },
+  { full_name: "Moon", a: 4, e: 0.1, i: 5.1, height: 0.9, size: 0.15, velocity: 0.3, texture: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg' },
 ];
 
 function orbitalToCartesian(a, e, i, theta) {
@@ -281,12 +281,12 @@ let markerProto = {
 // Place Marker
 let placeMarker = function (object, options) {
   let position = markerProto.latLongToVector3(options.latitude, options.longitude, options.radius, options.height);
-  let marker = markerProto.marker(options.size, options.color, position);
+  let marker = markerProto.marker(options.size, options.texture, position);
   object.add(marker);
 };
 
 // Place Marker At Address
-let placeMarkerAtAddress = function (address, color) {
+let placeMarkerAtAddress = function (address, texture) {
   let encodedLocation = address.replace(/\s/g, '+');
   let httpRequest = new XMLHttpRequest();
 
