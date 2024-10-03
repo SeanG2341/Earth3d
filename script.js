@@ -162,7 +162,7 @@ let neoData = [
   { full_name: "Cadmus", a: 2, e: 0.6, i: -65.1, height: 1.4, size: 0.03, velocity: 1 },
   { full_name: "Sisyphus", a: 0.32, e: 0.9, i: 1.1, height: 0.4, size: 0.04, velocity: -1.4 },
   { full_name: "Amor", a: 21, e: 0.2, i: 32.0, height: 0.4, size: 0.02, velocity: 0.6 },
-  { full_name: "Moon", a: 4, e: 0.1, i: 5.1, height: 0.9, size: 0.15, velocity: 0.3, texture: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg' },
+  { full_name: "Moon", a: 4, e: 0.1, i: 5.1, height: 0.9, size: 0.15, velocity: 0.3, url: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg' },
 ];
 
 function orbitalToCartesian(a, e, i, theta) {
@@ -218,31 +218,67 @@ function placeNEOMarkers() {
 }
 
 
-// Function to create NEO marker with given properties
 function createNEOMarker(neo) {
-  const theta = neo.theta; 
+  const theta = neo.theta;
   const { x, y, z } = orbitalToCartesian(neo.a, neo.e, neo.i, theta);
 
   // Convert Cartesian coordinates to latitude and longitude
   const latitude = (Math.asin(z / Math.sqrt(x * x + y * y + z * z)) * 180 / Math.PI);
   const longitude = (Math.atan2(y, x) * 180 / Math.PI);
 
-  // Use individual height and size from neoData
-  const markerPosition = markerProto.latLongToVector3(latitude, longitude, 0.4, neo.height);
-
-  // Create the marker with a moon texture
-  const markerMesh = markerProto.marker(neo.size, 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg', markerPosition);
-
-  markerMesh.userData.name = neo.full_name; 
-  markerMesh.callback = () => {
-      document.querySelectorAll('.infoBox').forEach(box => {
-          box.style.display = 'none';
-      });
-      document.getElementById(`marker${index + 1}`).style.display = 'block';
-  };
+  // Create a marker for the NEO
+  const geometry = new THREE.SphereGeometry(neo.size, 16, 16);
   
-  return markerMesh;
+  // Default to a basic material if no texture URL is provided
+  let material = new THREE.MeshBasicMaterial({ color: '#282828' });
+
+  // Check if a texture URL is provided for the marker (like for the Moon)
+  if (neo.url) {
+    const textureLoader = new THREE.TextureLoader();
+    material = new THREE.MeshBasicMaterial();
+    
+    // Load the texture for this marker
+    textureLoader.load(neo.url, (texture) => {
+      material.map = texture;  // Apply the texture to the material
+      material.needsUpdate = true;  // Update the material to reflect the texture
+    });
+  }
+
+  const marker = new THREE.Mesh(geometry, material);
+
+  // Set the position of the marker based on latitude and longitude
+  const newPosition = markerProto.latLongToVector3(latitude, longitude, 0.4, neo.height);
+  marker.position.copy(newPosition);
+
+  marker.name = neo.full_name; // Set the marker name to its NEO name
+  
+  return marker;
 }
+
+// Raycaster for mouse events
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener('click', (event) => {
+  // Convert mouse coordinates to normalized device coordinates (-1 to +1)
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // Update the raycaster with the camera and mouse position
+  raycaster.setFromCamera(mouse, camera);
+
+  // Calculate objects intersecting the picking ray
+  const intersects = raycaster.intersectObjects(earth.getObjectByName('surface').children);
+
+  if (intersects.length > 0) {
+    const intersectedObject = intersects[0].object;
+
+    if (intersectedObject.userData.url) {
+      window.open(intersectedObject.userData.url, '_blank'); // Open the URL in a new tab
+    }
+  }
+});
+
 
 // Marker Proto (updated to use texture)
 let markerProto = {
