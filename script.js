@@ -219,41 +219,32 @@ function placeNEOMarkers() {
 
 
 function createNEOMarker(neo) {
-  const theta = neo.theta;
+  const theta = neo.theta; 
   const { x, y, z } = orbitalToCartesian(neo.a, neo.e, neo.i, theta);
 
-  // Convert Cartesian coordinates to latitude and longitude
   const latitude = (Math.asin(z / Math.sqrt(x * x + y * y + z * z)) * 180 / Math.PI);
   const longitude = (Math.atan2(y, x) * 180 / Math.PI);
 
-  // Create a marker for the NEO
-  const geometry = new THREE.SphereGeometry(neo.size, 16, 16);
-  
-  // Default to a basic material if no texture URL is provided
-  let material = new THREE.MeshBasicMaterial({ color: '#282828' });
-
-  // Check if a texture URL is provided for the marker (like for the Moon)
-  if (neo.url) {
-    const textureLoader = new THREE.TextureLoader();
-    material = new THREE.MeshBasicMaterial();
-    
-    // Load the texture for this marker
-    textureLoader.load(neo.url, (texture) => {
-      material.map = texture;  // Apply the texture to the material
-      material.needsUpdate = true;  // Update the material to reflect the texture
-    });
-  }
-
+  const geometry = new THREE.SphereGeometry(neo.size, 10, 10);
+  const material = new THREE.MeshPhongMaterial({
+    color: '#999999',
+    shininess: 1,
+    specular: 0x555555
+  });
   const marker = new THREE.Mesh(geometry, material);
 
-  // Set the position of the marker based on latitude and longitude
   const newPosition = markerProto.latLongToVector3(latitude, longitude, 0.4, neo.height);
   marker.position.copy(newPosition);
+  marker.name = neo.full_name; 
 
-  marker.name = neo.full_name; // Set the marker name to its NEO name
-  
+  // Add URL to the userData only for the Moon
+  if (neo.url) {
+    marker.userData.url = neo.url;
+  }
+
   return marker;
 }
+
 
 // Raycaster for mouse events
 const raycaster = new THREE.Raycaster();
@@ -294,20 +285,9 @@ let markerProto = {
   },
   
   // Use texture instead of color
-  marker: function marker(size, textureUrl, vector3Position) {
+  marker: function marker(size, vector3Position) {
       let markerGeometry = new THREE.SphereGeometry(size);
       
-      // Load the texture using TextureLoader
-      let textureLoader = new THREE.TextureLoader();
-      let markerMaterial = new THREE.MeshLambertMaterial();
-
-      textureLoader.load(textureUrl, function (texture) {
-          markerMaterial.map = texture; // Apply the loaded texture to the material
-      });
-
-      let markerMesh = new THREE.Mesh(markerGeometry, markerMaterial);
-      markerMesh.position.copy(vector3Position);
-
       return markerMesh;
   }
 };
@@ -426,7 +406,7 @@ var surfaceControls = new function () {
 
 var markersControls = new function () {
   this.address = '';
-  this.color = 0xff0000;
+  this.color = '#A9A9A9';
   this.placeMarker = function () {
     placeMarkerAtAddress(this.address, this.color);
   };
@@ -460,10 +440,6 @@ guiSurface.add(surfaceControls, 'bumpScale', 0, 1).step(0.01).onChange(function 
 guiSurface.add(surfaceControls, 'shininess', 0, 30).onChange(function (value) {
   earth.getObjectByName('surface').material.shininess = value;
 });
-
-guiMarkers.add(markersControls, 'address');
-guiMarkers.addColor(markersControls, 'color');
-guiMarkers.add(markersControls, 'placeMarker');
 
 guiAtmosphere.add(atmosphereControls, 'opacity', 0, 1).onChange(function (value) {
   earth.getObjectByName('atmosphere').material.opacity = value;
