@@ -6,3 +6,18 @@ canvas
 {
   display: block;
 }
+#infoBox {
+  position: absolute;
+  display: none;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  pointer-events: none; /* Allows clicking through the info box */
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+}
+
+.infoBox button {
+  margin-top: 10px;
+}
