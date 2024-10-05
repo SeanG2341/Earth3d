@@ -1,9 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
+  
   <meta charset='utf-8'>
-  <title>3D Earth Model | Epic Programmer</title>
+  <title>Model 3D Ziemi</title>
   <link rel='stylesheet' href='style.css'>
+  <style>
+    #tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: none;
+      pointer-events: none;
+    }
+  </style>
+  
+  <div id="tooltip">Księżyc</div>
+  
 </head>
 <body>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js'></script>
